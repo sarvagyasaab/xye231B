@@ -15,4 +15,13 @@ class Comments(models.Model):
     upvote = models.BooleanField(default=False)
     downvote = models.BooleanField(default=False)
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(upvote=False) | models.Q(downvote=False),
+                name='upvote-downvote exclusive',
+                violation_error_message='You cannot simultaneously upvote and downvote this comment.',
+            )
+        ]
+
 
