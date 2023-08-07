@@ -7,6 +7,8 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 # from .models import Post, PostActivity, Comment
 from .models import Post, Comments
+from rest_framework import generics
+from .serializers import UserSerializer, PostSerializer
 
 def Home(request):
     message = 'Home Page'
@@ -61,4 +63,21 @@ def all_posts(request):
 
 # add constraints to model Comments (done)
 # add upvote/downvote to json (done)
+
+
+class UserList(generics.ListCreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+class UserDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+class PostList(generics.ListCreateAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+
+class PostDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
 
