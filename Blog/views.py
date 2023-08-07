@@ -24,39 +24,6 @@ def decrypt_data(encrypted_data):
     decrypted_data = fernet.decrypt(encrypted_data).decode()
     return decrypted_data
 
-# def all_posts(request):
-#     posts = Post.objects.all()
-#
-#     serialized_posts = []
-#
-#     for post in posts:
-#         serialized_post = {
-#             "content": post.content,
-#             "date_posted": post.date_posted.strftime('%Y-%m-%d %H:%M:%S'),
-#             "author": encrypt_data(post.author.username).decode('utf-8'),
-#             'mentioned_user': None,
-#             'comments' : {
-#                 'comment-user' : None,
-#                 'comment-data' : None
-#             }
-#
-#         }
-#
-#         if post.mentioned_user:
-#             serialized_post['mentioned_user'] = {
-#                 'username': post.mentioned_user.username,
-#             }
-#
-#         serialized_posts.append(serialized_post)
-#
-#         comments = Comments.objects.get(post_id = post.id)
-#
-#         for comment in comments :
-#             serialized_post['comments']['comment-user'] = comment.user_commented,
-#             serialized_post['comments']['comment-data'] = comment.comment,
-#
-#     return JsonResponse(serialized_posts, safe=False)
-
 def all_posts(request):
     posts = Post.objects.select_related('author', 'mentioned_user').all()
     serialized_posts = []
