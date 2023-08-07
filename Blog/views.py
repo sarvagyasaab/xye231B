@@ -49,6 +49,8 @@ def all_posts(request):
             comment_data = {
                 'comment-user': comment.user_commented.username,
                 'comment-data': comment.comment,
+                'upvote' : comment.upvote,
+                'downvote' : comment.downvote
             }
             post_comments.append(comment_data)
 
@@ -56,4 +58,7 @@ def all_posts(request):
         serialized_posts.append(serialized_post)
 
     return JsonResponse(serialized_posts, safe=False)
+
+# add constraints to model Comments (done)
+# add upvote/downvote to json (done)
 
