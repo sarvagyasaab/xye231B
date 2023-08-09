@@ -114,13 +114,39 @@ def comment_views(request, fk):
     try:
         comments = Comments.objects.filter(post_id=fk)
     except ObjectDoesNotExist:
-        return Response({"message": "NO COMMENTS"}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
 
     all_comments = []
     for i, comment in enumerate(comments):
         serializer = CommentsSerializer(comment, many=False)  # Use CommentSerializer for each comment
         all_comments.append(serializer.data)
 
+    if not all_comments:
+        return Response({'message' : 'NO COMMENTS'}, status=status.HTTP_200_OK)
+
     return Response(all_comments)
+
+@api_view(['GET'])
+def mentioned_user(request, pk):
+    try:
+        post = Post.objects.get(id=pk)
+    except ObjectDoesNotExist:
+        return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = PostSerializer(post, many=False)
+    user_id = serializer.data['mentioned_user']
+
+    if user_id is None:
+        return Response({"message": "No mentioned user for this post"}, status=status.HTTP_200_OK)
+
+    try:
+        userData = User.objects.get(id=user_id)
+        user_serializer = UserSerializer(userData)  # Serialize the user data
+        return Response(user_serializer.data)
+    except User.DoesNotExist:
+        return Response({"error": "Mentioned user not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+
 
 
