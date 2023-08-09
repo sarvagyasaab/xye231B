@@ -3,10 +3,9 @@ from . import views
 
 
 urlpatterns = [
-    path('', views.all_endpoints, name="all-endpoints"),
-    path('users/', views.UserList.as_view(), name='user-list'),
-    path('users/<int:pk>/', views.UserDetail.as_view(), name='user-detail'),
-    path('posts/', views.PostList.as_view(), name='user-list'),
-    path('posts/<int:pk>/', views.PostDetail.as_view(), name='user-detail'),
-    path('comments/<int:pk>/', views.CommentDetail.as_view(), name='comment-detail'),
+    path('', views.all_endpoints, name="endpoint-list"),
+    path('posts/', views.postList, name="post-list"),
+    path('post/<int:pk>', views.postDetail, name="post-detail"),
+    path('user/<int:pk>/', views.userDetail, name='user-detail'),
+    path('post/comments/<int:pk>/', views.commentDetail, name='comment-detail'),
 ]

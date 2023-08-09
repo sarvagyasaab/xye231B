@@ -2,7 +2,6 @@ from django.contrib.auth.models import User
 from .models import Post, Comments
 from rest_framework import serializers
 
-
 class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model= Post
@@ -12,6 +11,10 @@ class PostSerializer(serializers.ModelSerializer):
             'author',
             'mentioned_user'
         ]
+    @staticmethod
+    def get_mentioned_user_name(self, obj):
+        return obj.mentioned_user.username
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,4 +25,12 @@ class UserSerializer(serializers.ModelSerializer):
             'email',
             'first_name',
             'last_name'
+        ]
+
+class CommentsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comments
+        fields = [
+            'comment-user',
+            'comment-data',
         ]

@@ -11,6 +11,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .serializers import UserSerializer, PostSerializer, CommentsSerializer
+from http import HTTPStatus
 
 def Home(request):
     message = 'Home Page'
@@ -67,6 +68,12 @@ def all_posts(request):
 # add upvote/downvote to json (done)
 
 
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from django.core.exceptions import ObjectDoesNotExist
+from .models import User, Post
+from .serializers import UserSerializer, PostSerializer
 
 @api_view(['GET'])
 def all_endpoints(request):
@@ -75,36 +82,41 @@ def all_endpoints(request):
     }
     return Response(endpoints)
 
+@api_view(['GET'])
+def userDetail(request, pk):
+    try:
+        user_info = User.objects.get(id=pk)
+    except ObjectDoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = UserSerializer(user_info)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def postList(request):
+    posts = Post.objects.all()
+    serializer = PostSerializer(posts, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def postDetail(request, pk):
+    try:
+        post = Post.objects.get(id=pk)
+    except ObjectDoesNotExist:
+        return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = PostSerializer(post, many=False)
+    return Response(serializer.data)
 
 
-class UserList(generics.ListCreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-class UserDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-class PostList(generics.ListCreateAPIView):
-    queryset = Post.objects.all()
-    serializer_class = PostSerializer
-
-class PostDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Post.objects.all()
-    serializer_class = PostSerializer
-
-class CommentList(generics.ListCreateAPIView):
-    serializer_class = CommentsSerializer
-    def get_queryset(self):
-        post_id = self.kwargs['pk']
-        return Comments.objects.filter(post_id=post_id)
-
-class CommentDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Comments.objects.all()
-    serializer_class = CommentsSerializer
-
-class Comment(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Comments.objects.all()
-    serializer_class = CommentsSerializer
+# @api_view(['GET'])
+# def commentDetail(request, fk):
+#     try:
+#         comments = Comments.objects.get(post_id=fk)
+#     except ObjectDoesNotExist:
+#         return Response({"message": "NO COMMENTS"}, status=status.HTTP_204_NO_CONTENT)
+#
+#     serializer = UserSerializer(comments, many=True)
+#     return Response(serializer.data)
 
 
