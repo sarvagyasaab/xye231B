@@ -5,8 +5,10 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
+from rest_framework.generics import get_object_or_404
+
 # from .models import Post, PostActivity, Comment
-from .models import Post, Comments
+from .models import Post, Comments, Friendship, FriendRequest
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -72,7 +74,6 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
-from .models import User, Post
 from .serializers import UserSerializer, PostSerializer
 
 @api_view(['GET'])
@@ -146,6 +147,7 @@ def mentioned_user(request, pk):
     serializer = PostSerializer(post, many=False)
     user_id = serializer.data['mentioned_user']
 
+
     if user_id is None:
         return Response({"message": "No mentioned user for this post"}, status=status.HTTP_200_OK)
 
@@ -157,6 +159,6 @@ def mentioned_user(request, pk):
         return Response({"error": "Mentioned user not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-
-
-
+@api_view(['GET'])
+def accept_friend_request(request, request_id):
+    friend_request = get_object_or_404(FriendRequest, pk=request_id)
