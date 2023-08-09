@@ -8,7 +8,9 @@ from django.http import JsonResponse
 # from .models import Post, PostActivity, Comment
 from .models import Post, Comments
 from rest_framework import generics
-from .serializers import UserSerializer, PostSerializer
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+from .serializers import UserSerializer, PostSerializer, CommentsSerializer
 
 def Home(request):
     message = 'Home Page'
@@ -65,6 +67,16 @@ def all_posts(request):
 # add upvote/downvote to json (done)
 
 
+
+@api_view(['GET'])
+def all_endpoints(request):
+    endpoints = {
+        'all_endpoints': '/',
+    }
+    return Response(endpoints)
+
+
+
 class UserList(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -80,4 +92,19 @@ class PostList(generics.ListCreateAPIView):
 class PostDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
+
+class CommentList(generics.ListCreateAPIView):
+    serializer_class = CommentsSerializer
+    def get_queryset(self):
+        post_id = self.kwargs['pk']
+        return Comments.objects.filter(post_id=post_id)
+
+class CommentDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Comments.objects.all()
+    serializer_class = CommentsSerializer
+
+class Comment(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Comments.objects.all()
+    serializer_class = CommentsSerializer
+
 
