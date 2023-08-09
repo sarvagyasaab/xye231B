@@ -93,6 +93,16 @@ def userDetail(request, pk):
     return Response(serializer.data)
 
 @api_view(['GET'])
+def userList(request):
+    try:
+        user_info = User.objects.all()
+    except ObjectDoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = UserSerializer(user_info, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
 def postList(request):
     posts = Post.objects.all()
     serializer = PostSerializer(posts, many=True)
