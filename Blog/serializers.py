@@ -24,7 +24,10 @@ class UserSerializer(serializers.ModelSerializer):
             'username',
             'email',
             'first_name',
-            'last_name'
+            'last_name',
+            'password',
+            'date_joined',
+            'is_active'
         ]
 
 class CommentsSerializer(serializers.ModelSerializer):
