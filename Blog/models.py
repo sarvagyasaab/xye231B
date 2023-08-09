@@ -14,7 +14,6 @@ class Comments(models.Model):
     user_commented = models.ForeignKey(User, on_delete=models.CASCADE)
     upvote = models.BooleanField(default=False)
     downvote = models.BooleanField(default=False)
-
     class Meta:
         constraints = [
             models.CheckConstraint(

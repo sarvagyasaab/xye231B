@@ -109,14 +109,18 @@ def postDetail(request, pk):
     return Response(serializer.data)
 
 
-# @api_view(['GET'])
-# def commentDetail(request, fk):
-#     try:
-#         comments = Comments.objects.get(post_id=fk)
-#     except ObjectDoesNotExist:
-#         return Response({"message": "NO COMMENTS"}, status=status.HTTP_204_NO_CONTENT)
-#
-#     serializer = UserSerializer(comments, many=True)
-#     return Response(serializer.data)
+@api_view(['GET'])
+def comment_views(request, fk):
+    try:
+        comments = Comments.objects.filter(post_id=fk)
+    except ObjectDoesNotExist:
+        return Response({"message": "NO COMMENTS"}, status=status.HTTP_204_NO_CONTENT)
+
+    all_comments = []
+    for i, comment in enumerate(comments):
+        serializer = CommentsSerializer(comment, many=False)  # Use CommentSerializer for each comment
+        all_comments.append(serializer.data)
+
+    return Response(all_comments)
 
 
