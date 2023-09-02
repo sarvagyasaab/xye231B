@@ -1,164 +1,81 @@
-from cryptography.fernet import Fernet
-from django.shortcuts import render
-from django.http import HttpResponse, HttpRequest, JsonResponse
-from django.contrib.auth.models import User
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
-from django.http import JsonResponse
+from rest_framework import viewsets, status, mixins
+from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
-
-# from .models import Post, PostActivity, Comment
+from rest_framework.response import Response
+from django.contrib.auth.models import User
 from .models import Post, Comments, Friendship, FriendRequest
-from rest_framework import generics
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from .serializers import UserSerializer, PostSerializer, CommentsSerializer
-from http import HTTPStatus
+from .serializers import (
+    PostSerializer,
+    CommentsSerializer,
+    FriendshipSerializer,
+    FriendRequestSerializer,
+    UserSerializer,
+)
 
-def Home(request):
-    message = 'Home Page'
-    return HttpResponse("Home")
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
-ENCRYPTION_KEY = b"PczoyJQgy_xRAnp_YNkecV6KGROpqDv94_6COdyHrT8='"
+    def create(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-def encrypt_data(data):
-    fernet = Fernet(ENCRYPTION_KEY)
-    encrypted_data = fernet.encrypt(data.encode())
-    return encrypted_data
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all().order_by('-date_posted')[:100]
+    serializer_class = PostSerializer
 
-def decrypt_data(encrypted_data):
-    fernet = Fernet(ENCRYPTION_KEY)
-    decrypted_data = fernet.decrypt(encrypted_data).decode()
-    return decrypted_data
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
-def all_posts(request):
-    posts = Post.objects.select_related('author', 'mentioned_user').all()
-    serialized_posts = []
+class FriendshipViewSet(viewsets.ModelViewSet):
+    queryset = Friendship.objects.all()
+    serializer_class = FriendshipSerializer
 
-    for post in posts:
-        serialized_post = {
-            "content": post.content,
-            "date_posted": post.date_posted.strftime('%Y-%m-%d %H:%M:%S'),
-            "author": encrypt_data(post.author.username).decode('utf-8'),
-            "mentioned_user": None,
-            "comments": [],
-        }
+class FriendRequestViewSet(viewsets.ModelViewSet):
+    serializer_class = FriendRequestSerializer
 
-        if post.mentioned_user:
-            serialized_post["mentioned_user"] = {
-                "username": post.mentioned_user.username,
-            }
+    def get_queryset(self):
+        user_identifier = self.kwargs.get('user_identifier')
+        try:
+            user_id = int(user_identifier)
+            user_obj = get_object_or_404(User, id=user_id)
+        except ValueError:
+            user_obj = get_object_or_404(User, username=user_identifier)
 
-        comments = Comments.objects.filter(post_id=post.id).select_related('user_commented')
+        if self.action == 'received':
+            return FriendRequest.objects.filter(receiver=user_obj)
+        elif self.action == 'sent':
+            return FriendRequest.objects.filter(sender=user_obj)
+        return FriendRequest.objects.none()
 
-        post_comments = []
-        for comment in comments:
-            comment_data = {
-                'comment-user': comment.user_commented.username,
-                'comment-data': comment.comment,
-                'upvote' : comment.upvote,
-                'downvote' : comment.downvote
-            }
-            post_comments.append(comment_data)
+    @action(detail=False, methods=['GET'], name='Received Friend Requests')
+    def received(self, request, user_identifier=None):
+        return self.list(request, user_identifier=user_identifier)
 
-        serialized_post['comments'] = post_comments
-        serialized_posts.append(serialized_post)
+    @action(detail=False, methods=['GET'], name='Sent Friend Requests')
+    def sent(self, request, user_identifier=None):
+        return self.list(request, user_identifier=user_identifier)
 
-    return JsonResponse(serialized_posts, safe=False)
+class PostByUserViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
 
-# add constraints to model Comments (done)
-# add upvote/downvote to json (done)
+    def get_queryset(self):
+        username = self.kwargs.get('username')
+        user = get_object_or_404(User, username=username)
+        return Post.objects.filter(author=user)
 
+class CommentsViewSet(viewsets.ModelViewSet):
+    queryset = Comments.objects.all()
+    serializer_class = CommentsSerializer
 
-from rest_framework import status
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from django.core.exceptions import ObjectDoesNotExist
-from .serializers import UserSerializer, PostSerializer
+    def list(self, request, post_id=None):
+        comments = Comments.objects.filter(post_id=post_id)
+        serializer = CommentsSerializer(comments, many=True)
+        return Response(serializer.data)
 
-@api_view(['GET'])
-def all_endpoints(request):
-    endpoints = {
-        'all_endpoints': '/',
-    }
-    return Response(endpoints)
-
-@api_view(['GET'])
-def userDetail(request, pk):
-    try:
-        user_info = User.objects.get(id=pk)
-    except ObjectDoesNotExist:
-        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    serializer = UserSerializer(user_info)
-    return Response(serializer.data)
-
-@api_view(['GET'])
-def userList(request):
-    try:
-        user_info = User.objects.all()
-    except ObjectDoesNotExist:
-        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    serializer = UserSerializer(user_info, many=True)
-    return Response(serializer.data)
-
-@api_view(['GET'])
-def postList(request):
-    posts = Post.objects.all()
-    serializer = PostSerializer(posts, many=True)
-    return Response(serializer.data)
-
-@api_view(['GET'])
-def postDetail(request, pk):
-    try:
-        post = Post.objects.get(id=pk)
-    except ObjectDoesNotExist:
-        return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    serializer = PostSerializer(post, many=False)
-    return Response(serializer.data)
-
-
-@api_view(['GET'])
-def comment_views(request, fk):
-    try:
-        comments = Comments.objects.filter(post_id=fk)
-    except ObjectDoesNotExist:
-        return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    all_comments = []
-    for i, comment in enumerate(comments):
-        serializer = CommentsSerializer(comment, many=False)  # Use CommentSerializer for each comment
-        all_comments.append(serializer.data)
-
-    if not all_comments:
-        return Response({'message' : 'NO COMMENTS'}, status=status.HTTP_200_OK)
-
-    return Response(all_comments)
-
-@api_view(['GET'])
-def mentioned_user(request, pk):
-    try:
-        post = Post.objects.get(id=pk)
-    except ObjectDoesNotExist:
-        return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    serializer = PostSerializer(post, many=False)
-    user_id = serializer.data['mentioned_user']
-
-
-    if user_id is None:
-        return Response({"message": "No mentioned user for this post"}, status=status.HTTP_200_OK)
-
-    try:
-        userData = User.objects.get(id=user_id)
-        user_serializer = UserSerializer(userData)  # Serialize the user data
-        return Response(user_serializer.data)
-    except User.DoesNotExist:
-        return Response({"error": "Mentioned user not found"}, status=status.HTTP_404_NOT_FOUND)
-
-
-@api_view(['GET'])
-def accept_friend_request(request, request_id):
-    friend_request = get_object_or_404(FriendRequest, pk=request_id)
+    def perform_create(self, serializer):
+        serializer.save(user_commented=self.request.user)

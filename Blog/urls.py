@@ -1,13 +1,29 @@
-from django.urls import path
-from . import views
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import (
+    UserViewSet,
+    PostViewSet,
+    FriendshipViewSet,
+    FriendRequestViewSet,
+    PostByUserViewSet,
+    CommentsViewSet,
+)
 
+router = DefaultRouter()
+router.register(r'users', UserViewSet)
+router.register(r'posts', PostViewSet)
+router.register(r'friendships', FriendshipViewSet)
+
+# Register the FriendRequestViewSet with a custom basename
+router.register(r'friend-requests', FriendRequestViewSet, basename='friendrequest')
 
 urlpatterns = [
-    path('', views.all_endpoints, name="endpoint-list"),
-    path('posts/', views.postList, name="post-list"),
-    path('post/<int:pk>', views.postDetail, name="post-detail"),
-    path('user/<int:pk>/', views.userDetail, name='user-detail'),
-    path('users/', views.userList, name='user-list'),
-    path('post/<int:pk>/mentioned_user/', views.mentioned_user, name='mentioned_user'),
-    path('post/<int:fk>/comments/', views.comment_views, name='comment-detail'),
+    path('', include(router.urls)),
+]
+
+urlpatterns += [
+    path('friend-requests/received/<str:user_identifier>/', FriendRequestViewSet.as_view({'get': 'received'}), name='received-friend-requests'),
+    path('friend-requests/sent/<str:user_identifier>/', FriendRequestViewSet.as_view({'get': 'sent'}), name='sent-friend-requests'),
+    path('posts-by-user/<str:username>/', PostByUserViewSet.as_view({'get': 'list'}), name='posts-by-user-list'),
+    path('comments/<int:post_id>/', CommentsViewSet.as_view({'get': 'list', 'post': 'create'}), name='post-comments'),
 ]
