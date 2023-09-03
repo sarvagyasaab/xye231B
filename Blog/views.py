@@ -1,5 +1,6 @@
 import hashlib
 
+import rest_framework
 from django.contrib.auth.hashers import make_password
 from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action
@@ -7,6 +8,8 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth.models import User
+
+from . import serializers
 from .models import Post, Comments, Friendship, FriendRequest
 from .serializers import (
     PostSerializer,
@@ -36,7 +39,7 @@ class PostViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = PostSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.validated_data['author'] = request.user  # Set the author to the logged-in user
+            serializer.validated_data['author'] = request.user
             post = serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -48,7 +51,6 @@ class FriendshipViewSet(viewsets.ModelViewSet):
 
 class FriendRequestViewSet(viewsets.ModelViewSet):
     serializer_class = FriendRequestSerializer
-
     def get_queryset(self):
         user_identifier = self.kwargs.get('user_identifier')
         try:
@@ -84,10 +86,22 @@ class CommentsViewSet(viewsets.ModelViewSet):
     queryset = Comments.objects.all()
     serializer_class = CommentsSerializer
 
+    author = rest_framework.serializers.ReadOnlyField(source='author.username')  # Make the author field read-only
+
+    class Meta:
+        model = Comments
+        fields = '__all__'
+
     def list(self, request, post_id=None):
         comments = Comments.objects.filter(post_id=post_id)
         serializer = CommentsSerializer(comments, many=True)
         return Response(serializer.data)
 
-    def perform_create(self, serializer):
-        serializer.save(user_commented=self.request.user)
+    def create(self, request, *args, **kwargs):
+        serializer = CommentsSerializer(data=request.data)
+        if serializer.is_valid():
+            comment = serializer.save(author=request.user)  # Set the author to the logged-in user
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+

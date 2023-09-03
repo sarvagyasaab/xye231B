@@ -1,3 +1,4 @@
+from django.contrib.auth.views import PasswordResetView
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
@@ -14,8 +15,7 @@ router = DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'posts', PostViewSet)
 router.register(r'friendships', FriendshipViewSet)
-
-# Register the FriendRequestViewSet with a custom basename
+router.register(r'comment', CommentsViewSet)
 router.register(r'friend-requests', FriendRequestViewSet, basename='friendrequest')
 
 urlpatterns = [
@@ -23,6 +23,7 @@ urlpatterns = [
 ]
 
 urlpatterns += [
+    path('password_reset/', PasswordResetView.as_view(), name='password_reset'),
     path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
     path('friend-requests/received/<str:user_identifier>/', FriendRequestViewSet.as_view({'get': 'received'}), name='received-friend-requests'),
     path('friend-requests/sent/<str:user_identifier>/', FriendRequestViewSet.as_view({'get': 'sent'}), name='sent-friend-requests'),
