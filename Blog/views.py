@@ -1,6 +1,10 @@
+import hashlib
+
+from django.contrib.auth.hashers import make_password
 from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from .models import Post, Comments, Friendship, FriendRequest
@@ -11,12 +15,13 @@ from .serializers import (
     FriendRequestSerializer,
     UserSerializer,
 )
-
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
+        hashed_password = make_password(request.data['password'])
+        request.data['password'] = hashed_password
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
@@ -26,9 +31,16 @@ class UserViewSet(viewsets.ModelViewSet):
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all().order_by('-date_posted')[:100]
     serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+    def create(self, request, *args, **kwargs):
+        serializer = PostSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.validated_data['author'] = request.user  # Set the author to the logged-in user
+            post = serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class FriendshipViewSet(viewsets.ModelViewSet):
     queryset = Friendship.objects.all()
