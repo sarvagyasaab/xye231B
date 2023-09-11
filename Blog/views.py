@@ -1,14 +1,12 @@
 import hashlib
-
 import rest_framework
 from django.contrib.auth.hashers import make_password
-from rest_framework import viewsets, status, mixins
+from rest_framework import viewsets, status, mixins, generics, filters
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-
 from . import serializers
 from .models import Post, Comments, Friendship, FriendRequest
 from .serializers import (
@@ -43,7 +41,6 @@ class PostViewSet(viewsets.ModelViewSet):
             post = serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class FriendshipViewSet(viewsets.ModelViewSet):
     queryset = Friendship.objects.all()
@@ -104,4 +101,8 @@ class CommentsViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+class UserSearchView(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['username', 'email']

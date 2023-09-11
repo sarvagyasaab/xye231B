@@ -9,7 +9,10 @@ from .views import (
     FriendRequestViewSet,
     PostByUserViewSet,
     CommentsViewSet,
+    UserSearchView
 )
+from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
+
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
@@ -24,9 +27,14 @@ urlpatterns = [
 
 urlpatterns += [
     path('password_reset/', PasswordResetView.as_view(), name='password_reset'),
+    path('api/users/search/', UserSearchView.as_view(), name='user-search'), #http://localhost:8000/api/users/search/?search=<name>/<email>
     path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
     path('friend-requests/received/<str:user_identifier>/', FriendRequestViewSet.as_view({'get': 'received'}), name='received-friend-requests'),
     path('friend-requests/sent/<str:user_identifier>/', FriendRequestViewSet.as_view({'get': 'sent'}), name='sent-friend-requests'),
     path('posts-by-user/<str:username>/', PostByUserViewSet.as_view({'get': 'list'}), name='posts-by-user-list'),
     path('comments/<int:post_id>/', CommentsViewSet.as_view({'get': 'list', 'post': 'create'}), name='post-comments'),
+    path('api/password/reset/', PasswordResetView.as_view(), name='password_reset'),
+    path('api/password/reset/done/', PasswordResetDoneView.as_view(), name='password_reset_done'),
+    path('api/password/reset/confirm/<uidb64>/<token>/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('api/password/reset/complete/', PasswordResetCompleteView.as_view(), name='password_reset_complete'),
 ]
