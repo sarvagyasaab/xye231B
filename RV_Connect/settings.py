@@ -131,27 +131,6 @@ STATIC_URL = 'static/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
-from django.core.mail import send_mail, EmailMessage
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587  # Use 587 for TLS or 465 for SSL
-EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False
-EMAIL_HOST_USER = 'your_email@gmail.com'  # Your Gmail email address
-EMAIL_HOST_PASSWORD = 'your_password'  # Your Gmail password or app password
-
-
-from django.core.mail import send_mail
-
-subject = 'Hello, RV ke 14 !'
-message = 'This is a test email sent for RV_Connect'
-from_email = 'rv.connect.help@gmail.com'
-recipient_list = ['recipient@example.com', 'sarvagyakrcs@gmail.com']
-
-send_mail(subject, message, from_email, recipient_list)
 
 

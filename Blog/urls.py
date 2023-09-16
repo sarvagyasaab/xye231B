@@ -33,8 +33,4 @@ urlpatterns += [
     path('friend-requests/sent/<str:user_identifier>/', FriendRequestViewSet.as_view({'get': 'sent'}), name='sent-friend-requests'),
     path('posts-by-user/<str:username>/', PostByUserViewSet.as_view({'get': 'list'}), name='posts-by-user-list'),
     path('comments/<int:post_id>/', CommentsViewSet.as_view({'get': 'list', 'post': 'create'}), name='post-comments'),
-    path('api/password/reset/', PasswordResetView.as_view(), name='password_reset'),
-    path('api/password/reset/done/', PasswordResetDoneView.as_view(), name='password_reset_done'),
-    path('api/password/reset/confirm/<uidb64>/<token>/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
-    path('api/password/reset/complete/', PasswordResetCompleteView.as_view(), name='password_reset_complete'),
 ]
