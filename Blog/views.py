@@ -134,10 +134,6 @@ class PostViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class FriendshipViewSet(viewsets.ModelViewSet):
-    queryset = Friendship.objects.all()
-    serializer_class = FriendshipSerializer
-
 class CommentsViewSet(viewsets.ModelViewSet):
     queryset = Comments.objects.all()
     serializer_class = CommentsSerializer
@@ -145,10 +141,51 @@ class CommentsViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = CommentsSerializer(data=request.data)
         if serializer.is_valid():
+            # Add the current user as the author of the comment
             serializer.validated_data['author'] = request.user
             comment = serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, pk=None):
+        comment = get_object_or_404(Comments, pk=pk)
+
+        # Check if the requesting user is the author of the comment
+        if comment.author != request.user:
+            return Response({'detail': 'You do not have permission to update this comment.'},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        serializer = CommentsSerializer(comment, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, pk=None):
+        try:
+            # Try to retrieve by comment ID
+            comment = get_object_or_404(Comments, pk=pk)
+        except Http404:
+            # If not found by comment ID, try to retrieve by author's username
+            comment = get_object_or_404(Comments, author__username=pk)
+
+        serializer = CommentsSerializer(comment)
+        return Response(serializer.data)
+
+    def destroy(self, request, pk=None):
+        comment = get_object_or_404(Comments, pk=pk)
+
+        # Check if the requesting user is the author of the comment
+        if comment.author != request.user:
+            return Response({'detail': 'You do not have permission to delete this comment.'},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        comment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class FriendshipViewSet(viewsets.ModelViewSet):
+    queryset = Friendship.objects.all()
+    serializer_class = FriendshipSerializer
 
 
 class FriendRequestViewSet(viewsets.ModelViewSet):

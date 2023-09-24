@@ -52,3 +52,31 @@ urlpatterns += [
     Partially update a specific post: PATCH /posts/{post_id}/
     Delete a specific post: DELETE /posts/{post_id}/
 '''
+
+'''
+    Create Comment:
+    HTTP Method: POST
+    URL: /comments/
+    Action Method: create
+    Retrieve Comment by ID or Author's Username:
+    
+    HTTP Method: GET
+    URL (by Comment ID): /comments/{comment_id}/
+    URL (by Author's Username): /comments/{author_username}/
+    Action Method: retrieve
+    Update Comment by ID:
+    
+    HTTP Method: PUT or PATCH
+    URL: /comments/{comment_id}/
+    Action Method: update
+    Delete Comment by ID:
+    
+    HTTP Method: DELETE
+    URL: /comments/{comment_id}/
+    Action Method: destroy
+    List Comments (All Comments):
+    
+    HTTP Method: GET
+    URL: /comments/
+    Action Method: list
+'''
