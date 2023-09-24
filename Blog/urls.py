@@ -18,7 +18,7 @@ router = DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'posts', PostViewSet)
 router.register(r'friendships', FriendshipViewSet)
-router.register(r'comment', CommentsViewSet)
+router.register(r'comments', CommentsViewSet)
 router.register(r'friend-requests', FriendRequestViewSet, basename='friendrequest')
 
 urlpatterns = [
@@ -32,5 +32,5 @@ urlpatterns += [
     path('friend-requests/received/<str:user_identifier>/', FriendRequestViewSet.as_view({'get': 'received'}), name='received-friend-requests'),
     path('friend-requests/sent/<str:user_identifier>/', FriendRequestViewSet.as_view({'get': 'sent'}), name='sent-friend-requests'),
     path('posts-by-user/<str:username>/', PostByUserViewSet.as_view({'get': 'list'}), name='posts-by-user-list'),
-    path('comments/<int:post_id>/', CommentsViewSet.as_view({'get': 'list', 'post': 'create'}), name='post-comments'),
+    path('', include(router.urls)),
 ]

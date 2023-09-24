@@ -3,10 +3,19 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 class Post(models.Model):
+    COLOR_CHOICES = (
+        ('red', 'Red'),
+        ('green', 'Green'),
+        ('blue', 'Blue'),
+        ('yellow', 'Yellow'),
+    )
+
     mentioned_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='mentioned_in_posts', blank=True, null=True)
     content = models.TextField()
     date_posted = models.DateTimeField(default=timezone.now)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
+    color_code = models.CharField(max_length=10, choices=COLOR_CHOICES, default='red')
+
 
 class Comments(models.Model):
     post_id = models.ForeignKey(Post, on_delete=models.CASCADE)
