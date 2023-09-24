@@ -8,6 +8,8 @@ class Post(models.Model):
         ('green', 'Green'),
         ('blue', 'Blue'),
         ('yellow', 'Yellow'),
+        ('pink', 'Pink'),
+        ('purple', 'Purple'),
     )
 
     mentioned_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='mentioned_in_posts', blank=True, null=True)
