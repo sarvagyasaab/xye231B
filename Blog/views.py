@@ -1,18 +1,12 @@
-import hashlib
-import random
-
-import rest_framework
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import make_password
-from django.core.mail import send_mail
+from django.contrib.auth.models import User
 from django.http import Http404
-from rest_framework import viewsets, status, mixins, generics, filters
-from rest_framework.decorators import action, api_view
-from rest_framework.generics import get_object_or_404
+from django.shortcuts import get_object_or_404
+from rest_framework import viewsets, status, generics, filters
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.contrib.auth.models import User
-from . import serializers
+
 from .models import Post, Comments, Friendship, FriendRequest
 from .serializers import (
     PostSerializer,
@@ -21,6 +15,7 @@ from .serializers import (
     FriendRequestSerializer,
     UserSerializer,
 )
+
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -55,10 +50,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, pk=None):
         try:
-            # Try to retrieve by user ID
             user = get_object_or_404(User, pk=pk)
         except Http404:
-            # If not found by user ID, try to retrieve by username
             user = get_object_or_404(User, username=pk)
 
         serializer = UserSerializer(user)
@@ -71,9 +64,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['GET'])
     def find_user(self, request):
-        # Implement your custom logic to find users here
-        # You can retrieve users based on certain criteria
-        # For example, filtering users by username
         username = request.query_params.get('username', None)
         if username:
             users = User.objects.filter(username=username)
@@ -134,20 +124,16 @@ class PostViewSet(viewsets.ModelViewSet):
         post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
 class CommentsViewSet(viewsets.ModelViewSet):
     queryset = Comments.objects.all()
     serializer_class = CommentsSerializer
 
     def create(self, request, *args, **kwargs):
-        # Check if the user is authenticated
         if not request.user.is_authenticated:
-            return Response({'detail': 'Authentication required to create a comment.'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'detail': 'Authentication required to create a comment.'},
+                            status=status.HTTP_401_UNAUTHORIZED)
 
-        # Set the user_commented field to the logged-in user
-        request.data['user_commented'] = request.user
-
-        # Create the comment
+        request.data['user_commented'] = request.user.pk
         serializer = CommentsSerializer(data=request.data)
         if serializer.is_valid():
             comment = serializer.save()
@@ -168,7 +154,6 @@ class CommentsViewSet(viewsets.ModelViewSet):
     def destroy(self, request, pk=None):
         comment = get_object_or_404(Comments, pk=pk)
 
-        # Check if the requesting user is the author of the comment
         if comment.author != request.user:
             return Response({'detail': 'You do not have permission to delete this comment.'},
                             status=status.HTTP_403_FORBIDDEN)
@@ -180,9 +165,9 @@ class FriendshipViewSet(viewsets.ModelViewSet):
     queryset = Friendship.objects.all()
     serializer_class = FriendshipSerializer
 
-
 class FriendRequestViewSet(viewsets.ModelViewSet):
     serializer_class = FriendRequestSerializer
+
     def get_queryset(self):
         user_identifier = self.kwargs.get('user_identifier')
         try:

@@ -22,7 +22,7 @@ class Post(models.Model):
 class Comments(models.Model):
     post_id = models.ForeignKey(Post, on_delete=models.CASCADE)
     comment = models.CharField(max_length=500, default=None)
-    user_commented = models.ForeignKey(User, on_delete=models.CASCADE)
+    user_commented = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     upvote = models.BooleanField(default=False)
     downvote = models.BooleanField(default=False)
     class Meta:
