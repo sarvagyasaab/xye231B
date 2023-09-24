@@ -74,4 +74,9 @@
 ### List Comments (All Comments)
 - **HTTP Method:** GET
 - **URL:** `/comments/`
-- **Action Method:** list
+
+### Retrieve Comments on a Particular Post
+- **HTTP Method:** GET
+- **URL:** `/comments/comments_on_post/{post_id}/`
+- **Action Method:** comments_on_post
+
