@@ -110,6 +110,23 @@ This documentation provides a detailed overview of the endpoints in your Django 
 #### Response
 - Creates a new comment for the specified post.
 
+### Update a Comment
+#### Request
+- Method: PUT
+- URL: `/comments/<int:comment_id>/`
+- Data: Updated comment content
+
+#### Response
+- Updates an existing comment.
+
+### Delete a Comment
+#### Request
+- Method: DELETE
+- URL: `/comments/<int:comment_id>/`
+
+#### Response
+- Deletes the specified comment.
+
 ## User Management Endpoints
 
 These endpoints are used for user management, including user creation and listing users.
