@@ -34,6 +34,9 @@ urlpatterns += [
     path('posts-by-user/<str:username>/', PostByUserViewSet.as_view({'get': 'list'}), name='posts-by-user-list'),
     path('', include(router.urls)),
     path('users/<int:pk>/user-details/', UserViewSet.as_view({'get': 'user_details'}), name='user-details'),
+    path('comments/comments_on_post/<int:post_id>/', CommentsViewSet.as_view({'get': 'comments_on_post'}),
+         name='comments-on-post'),
+
 ]
 
 '''

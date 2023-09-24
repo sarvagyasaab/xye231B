@@ -5,6 +5,7 @@ import rest_framework
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import make_password
 from django.core.mail import send_mail
+from django.http import Http404
 from rest_framework import viewsets, status, mixins, generics, filters
 from rest_framework.decorators import action, api_view
 from rest_framework.generics import get_object_or_404
@@ -139,37 +140,29 @@ class CommentsViewSet(viewsets.ModelViewSet):
     serializer_class = CommentsSerializer
 
     def create(self, request, *args, **kwargs):
+        # Check if the user is authenticated
+        if not request.user.is_authenticated:
+            return Response({'detail': 'Authentication required to create a comment.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Set the user_commented field to the logged-in user
+        request.data['user_commented'] = request.user
+
+        # Create the comment
         serializer = CommentsSerializer(data=request.data)
         if serializer.is_valid():
-            # Add the current user as the author of the comment
-            serializer.validated_data['author'] = request.user
             comment = serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def update(self, request, pk=None):
-        comment = get_object_or_404(Comments, pk=pk)
-
-        # Check if the requesting user is the author of the comment
-        if comment.author != request.user:
-            return Response({'detail': 'You do not have permission to update this comment.'},
-                            status=status.HTTP_403_FORBIDDEN)
-
-        serializer = CommentsSerializer(comment, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
     def retrieve(self, request, pk=None):
-        try:
-            # Try to retrieve by comment ID
-            comment = get_object_or_404(Comments, pk=pk)
-        except Http404:
-            # If not found by comment ID, try to retrieve by author's username
-            comment = get_object_or_404(Comments, author__username=pk)
+        comments = Comments.objects.filter(user_commented__username=pk)
+        serializer = CommentsSerializer(comments, many=True)
+        return Response(serializer.data)
 
-        serializer = CommentsSerializer(comment)
+    @action(detail=False, methods=['GET'])
+    def comments_on_post(self, request, post_id=None):
+        comments = Comments.objects.filter(post_id=post_id)
+        serializer = CommentsSerializer(comments, many=True)
         return Response(serializer.data)
 
     def destroy(self, request, pk=None):

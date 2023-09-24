@@ -34,6 +34,17 @@ class CommentsSerializer(serializers.ModelSerializer):
         model = Comments
         fields = '__all__'
 
+    def create(self, validated_data):
+        # Get the user_commented from the context
+        user_commented = self.context.get('user_commented')
+
+        # Add the user_commented to the validated_data
+        validated_data['user_commented'] = user_commented
+
+        # Create and return the comment
+        comment = Comments.objects.create(**validated_data)
+        return comment
+
 class FriendshipSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     friend = UserSerializer(read_only=True)
