@@ -75,6 +75,40 @@
 - **HTTP Method:** GET
 - **URL:** `/comments/`
 
+
+# Friend Request API Endpoints
+
+Here are the API endpoints for managing friend requests:
+
+- **List all friend requests**:
+  - HTTP Method: `GET`
+  - Endpoint: `/api/friend-requests/`
+
+- **Create a new friend request**:
+  - HTTP Method: `POST`
+  - Endpoint: `/api/friend-requests/`
+
+- **Retrieve a specific friend request**:
+  - HTTP Method: `GET`
+  - Endpoint: `/api/friend-requests/{request_id}/`
+  - Replace `{request_id}` with the actual request ID to retrieve a specific friend request.
+
+- **Update a specific friend request**:
+  - HTTP Method: `PUT`
+  - Endpoint: `/api/friend-requests/{request_id}/`
+  - Replace `{request_id}` with the actual request ID to update a specific friend request.
+
+- **Partial update of a specific friend request**:
+  - HTTP Method: `PATCH`
+  - Endpoint: `/api/friend-requests/{request_id}/`
+  - Replace `{request_id}` with the actual request ID to partially update a specific friend request.
+
+- **Delete a specific friend request**:
+  - HTTP Method: `DELETE`
+  - Endpoint: `/api/friend-requests/{request_id}/`
+  - Replace `{request_id}` with the actual request ID to delete a specific friend request.
+
+
 ### Retrieve Comments on a Particular Post
 - **HTTP Method:** GET
 - **URL:** `/comments/comments_on_post/{post_id}/`
