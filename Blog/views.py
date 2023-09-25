@@ -257,7 +257,9 @@ class FriendRequestViewSet(viewsets.ModelViewSet):
         except FriendRequest.DoesNotExist:
             return Response({'detail': 'Friend request not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-
+class FriendshipViewSet(viewsets.ModelViewSet):
+    queryset = Friendship.objects.all()
+    serializer_class = FriendshipSerializer
 
 class PostByUserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Post.objects.all()
@@ -268,8 +270,32 @@ class PostByUserViewSet(viewsets.ReadOnlyModelViewSet):
         user = get_object_or_404(User, username=username)
         return Post.objects.filter(author=user)
 
+class FriendsByUsernameView(generics.ListAPIView):
+    serializer_class = FriendshipSerializer
+
+    def get_queryset(self):
+        # Get the user by username
+        username = self.kwargs['username']
+        user = User.objects.get(username=username)
+
+        # Get the user's friends
+        return Friendship.objects.filter(user=user, status='accepted')
+
 class UserSearchView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['username', 'email']
+
+from drf_yasg.utils import swagger_auto_schema
+
+@swagger_auto_schema(
+    responses={
+        200: "Success",
+        400: "Bad Request",
+        404: "Not Found",
+    },
+    operation_description="Description of your view.",
+)
+def your_view_name(self, request):
+    pass

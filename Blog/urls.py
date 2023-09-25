@@ -9,7 +9,7 @@ from .views import (
     FriendRequestViewSet,
     PostByUserViewSet,
     CommentsViewSet,
-    UserSearchView,
+    UserSearchView, FriendsByUsernameView,
 )
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 
@@ -20,6 +20,8 @@ router.register(r'posts', PostViewSet)
 router.register(r'friendships', FriendshipViewSet)
 router.register(r'comments', CommentsViewSet)
 router.register(r'friend-requests', FriendRequestViewSet, basename='friendrequest')
+router.register(r'friendships', FriendshipViewSet)
+
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -38,7 +40,7 @@ urlpatterns += [
          name='comments-on-post'),
     path('users/by-userid/<int:pk>/', UserViewSet.as_view({'get': 'retrieve_by_userid'}), name='user-retrieve-by-userid'),
     path('users/by-username/<str:pk>/', UserViewSet.as_view({'get': 'retrieve_by_username'}), name='user-retrieve-by-username'),
-]
+    path('api/friends/by-username/<str:username>/', FriendsByUsernameView.as_view(), name='friends-by-username'),]
 
 '''
     Create User: POST /users/
@@ -93,4 +95,14 @@ urlpatterns += [
     Retrieve a specific friend request: GET /api/friend-requests/{request_id}/
     /friend-requests/sent_requests/: Retrieves friend requests where the user is the sender.
     /friend-requests/received_requests/: Retrieves friend requests where the user is the receiver.
+'''
+
+'''
+    Create: POST to /api/friendships/
+    Read (List): GET to /api/friendships/
+    Read (Detail): GET to /api/friendships/{friendship_id}/
+    Update: PUT or PATCH to /api/friendships/{friendship_id}/
+    Delete: DELETE to /api/friendships/{friendship_id}/
+    retrieve a user's friends by specifying their username in the URL, like /api/friends/by-username/{username}/.
+    
 '''
