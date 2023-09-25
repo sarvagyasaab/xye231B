@@ -6,7 +6,7 @@ from rest_framework import viewsets, status, generics, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from django.db.models import Q
 from .models import Post, Comments, Friendship, FriendRequest
 from .serializers import (
     PostSerializer,
@@ -48,12 +48,27 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    from django.shortcuts import get_object_or_404
+    from django.http import Http404
+
     def retrieve(self, request, pk=None):
         try:
+            # Try to retrieve by primary key (ID) first
             user = get_object_or_404(User, pk=pk)
-        except Http404:
+        except (Http404, ValueError):
+            # If not found or if pk is not a valid number, try to retrieve by username
             user = get_object_or_404(User, username=pk)
 
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+    def retrieve_by_userid(self, request, pk=None):
+        user = get_object_or_404(User, pk=pk)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+    def retrieve_by_username(self, request, pk=None):
+        user = get_object_or_404(User, username=pk)
         serializer = UserSerializer(user)
         return Response(serializer.data)
 
@@ -167,28 +182,82 @@ class FriendshipViewSet(viewsets.ModelViewSet):
 
 class FriendRequestViewSet(viewsets.ModelViewSet):
     serializer_class = FriendRequestSerializer
+    queryset = FriendRequest.objects.all()
+    def create(self, request, *args, **kwargs):
+        sender = request.user.id
+        data = request.data.copy()
+        data['sender'] = sender
+        serializer = FriendRequestSerializer(data=data)
 
-    def get_queryset(self):
-        user_identifier = self.kwargs.get('user_identifier')
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['GET'])
+    def received_requests(self, request):
         try:
-            user_id = int(user_identifier)
-            user_obj = get_object_or_404(User, id=user_id)
-        except ValueError:
-            user_obj = get_object_or_404(User, username=user_identifier)
+            # Get all friend requests received by the user
+            received_requests = FriendRequest.objects.filter(receiver=request.user)
 
-        if self.action == 'received':
-            return FriendRequest.objects.filter(receiver=user_obj)
-        elif self.action == 'sent':
-            return FriendRequest.objects.filter(sender=user_obj)
-        return FriendRequest.objects.none()
+            # Serialize the friend requests
+            serializer = FriendRequestSerializer(received_requests, many=True)
 
-    @action(detail=False, methods=['GET'], name='Received Friend Requests')
-    def received(self, request, user_identifier=None):
-        return self.list(request, user_identifier=user_identifier)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['GET'], name='Sent Friend Requests')
-    def sent(self, request, user_identifier=None):
-        return self.list(request, user_identifier=user_identifier)
+    @action(detail=False, methods=['GET'])
+    def sent_requests(self, request):
+        try:
+            # Get all friend requests sent by the user
+            sent_requests = FriendRequest.objects.filter(sender=request.user)
+
+            # Serialize the friend requests
+            serializer = FriendRequestSerializer(sent_requests, many=True)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['POST'])
+    def accept_request(self, request, pk=None):
+        try:
+            friend_request = self.get_object()
+
+            # Check if the friend request is pending
+            if friend_request.status == 'pending' or 'Pending' or ('pending', 'Pending') or ["pending", "Pending"]:
+                # Create a friendship object for the accepted request
+                friendship = Friendship(user=friend_request.receiver, friend=friend_request.sender, status='accepted')
+                friendship.save()
+
+                # Delete the friend request from the database
+                friend_request.delete()
+
+                return Response({'detail': 'Friend request accepted and saved as friendship.'},
+                                status=status.HTTP_200_OK)
+            else:
+                return Response({'detail': 'Friend request is not pending.'}, status=status.HTTP_400_BAD_REQUEST)
+        except FriendRequest.DoesNotExist:
+            return Response({'detail': 'Friend request not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['POST'])
+    def reject_request(self, request, pk=None):
+        try:
+            friend_request = self.get_object()
+
+            # Check if the friend request is pending
+            if friend_request.status == 'pending' or 'Pending' or ('pending', 'Pending') or ["pending", "Pending"]:
+                # Delete the friend request from the database
+                friend_request.delete()
+
+                return Response({'detail': 'Friend request rejected and removed.'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'detail': 'Friend request is not pending.'}, status=status.HTTP_400_BAD_REQUEST)
+        except FriendRequest.DoesNotExist:
+            return Response({'detail': 'Friend request not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
 
 class PostByUserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Post.objects.all()

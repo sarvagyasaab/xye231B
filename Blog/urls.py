@@ -36,7 +36,8 @@ urlpatterns += [
     path('users/<int:pk>/user-details/', UserViewSet.as_view({'get': 'user_details'}), name='user-details'),
     path('comments/comments_on_post/<int:post_id>/', CommentsViewSet.as_view({'get': 'comments_on_post'}),
          name='comments-on-post'),
-
+    path('users/by-userid/<int:pk>/', UserViewSet.as_view({'get': 'retrieve_by_userid'}), name='user-retrieve-by-userid'),
+    path('users/by-username/<str:pk>/', UserViewSet.as_view({'get': 'retrieve_by_username'}), name='user-retrieve-by-username'),
 ]
 
 '''
@@ -45,6 +46,8 @@ urlpatterns += [
     Update User: PUT /users/{user_id}/
     Delete User: DELETE /users/{user_id}/
     Find User: GET /users/find_user/?username={username}
+    /users/by-userid/{pk}/: Retrieves a user by userid.
+    /users/by-username/{pk}/: Retrieves a user by username.
 '''
 
 '''
@@ -82,4 +85,12 @@ urlpatterns += [
     HTTP Method: GET
     URL: /comments/
     Action Method: list
+'''
+
+'''
+    List all friend requests: GET /api/friend-requests/
+    Create a new friend request: POST /api/friend-requests/
+    Retrieve a specific friend request: GET /api/friend-requests/{request_id}/
+    /friend-requests/sent_requests/: Retrieves friend requests where the user is the sender.
+    /friend-requests/received_requests/: Retrieves friend requests where the user is the receiver.
 '''
