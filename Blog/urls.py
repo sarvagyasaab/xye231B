@@ -9,7 +9,8 @@ from .views import (
     FriendRequestViewSet,
     PostByUserViewSet,
     CommentsViewSet,
-    UserSearchView, FriendsByUsernameView,
+    UserSearchView, FriendsByUsernameView, UserProfilePicListCreateView, UserProfilePicDetailView,
+    UserProfilePicByUsernameView,
 )
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 
@@ -40,7 +41,12 @@ urlpatterns += [
          name='comments-on-post'),
     path('users/by-userid/<int:pk>/', UserViewSet.as_view({'get': 'retrieve_by_userid'}), name='user-retrieve-by-userid'),
     path('users/by-username/<str:pk>/', UserViewSet.as_view({'get': 'retrieve_by_username'}), name='user-retrieve-by-username'),
-    path('api/friends/by-username/<str:username>/', FriendsByUsernameView.as_view(), name='friends-by-username'),]
+    path('api/friends/by-username/<str:username>/', FriendsByUsernameView.as_view(), name='friends-by-username'),
+    path('profile-pics/', UserProfilePicListCreateView.as_view(), name='profile-pic-list-create'),
+    path('profile-pics/<int:pk>/', UserProfilePicDetailView.as_view(), name='profile-pic-detail'),
+    path('profile-pics/by-username/<str:username>/', UserProfilePicByUsernameView.as_view(),
+         name='profile-pic-by-username'),
+]
 
 '''
     Create User: POST /users/

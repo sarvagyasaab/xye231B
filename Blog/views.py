@@ -15,6 +15,8 @@ from .serializers import (
     FriendRequestSerializer,
     UserSerializer,
 )
+from .models import UserProfilePic
+from .serializers import UserProfilePicSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -34,6 +36,23 @@ class UserViewSet(viewsets.ModelViewSet):
             user = serializer.save()
             return Response({'detail': f'User registered successfully: {user}'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserProfilePicListCreateView(generics.ListCreateAPIView):
+    queryset = UserProfilePic.objects.all()
+    serializer_class = UserProfilePicSerializer
+    permission_classes = [IsAuthenticated]
+
+class UserProfilePicDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = UserProfilePic.objects.all()
+    serializer_class = UserProfilePicSerializer
+    permission_classes = [IsAuthenticated]
+
+from rest_framework.views import APIView
+class UserProfilePicByUsernameView(APIView):
+    def get(self, request, username, format=None):
+        user_profile = get_object_or_404(UserProfilePic, user__username=username)
+        serializer = UserProfilePicSerializer(user_profile)
+        return Response(serializer.data)
 
     def update(self, request, pk=None):
         user = get_object_or_404(User, pk=pk)

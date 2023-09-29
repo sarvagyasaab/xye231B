@@ -18,6 +18,14 @@ class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     color_code = models.CharField(max_length=10, choices=COLOR_CHOICES, default='red')
 
+class UserProfilePic(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    bio = models.TextField(blank=True)
+    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+
+    def __str__(self):
+        return self.user.username
+
 
 class Comments(models.Model):
     post_id = models.ForeignKey(Post, on_delete=models.CASCADE)

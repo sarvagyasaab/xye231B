@@ -1,7 +1,8 @@
 # serializers.py
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Post, Comments, Friendship, FriendRequest
+from .models import Post, Comments, Friendship, FriendRequest, UserProfilePic
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -61,3 +62,8 @@ class FriendRequestSerializer(serializers.ModelSerializer):
         model = FriendRequest
         fields = ('request_id', 'sender', 'receiver', 'status', 'created_at')
 
+
+class UserProfilePicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfilePic
+        fields = '__all__'
