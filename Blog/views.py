@@ -1,5 +1,6 @@
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status, generics, filters
@@ -187,14 +188,30 @@ class CommentsViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def destroy(self, request, pk=None):
-        comment = get_object_or_404(Comments, pk=pk)
+        try:
+            comment = Comments.objects.get(pk=pk)
 
-        if comment.author != request.user:
-            return Response({'detail': 'You do not have permission to delete this comment.'},
-                            status=status.HTTP_403_FORBIDDEN)
+            if comment.user_commented != request.user:
+                return Response({'detail': 'You do not have permission to delete this comment.'},
+                                status=status.HTTP_403_FORBIDDEN)
 
-        comment.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            comment_data = CommentsSerializer(comment).data
+            comment.delete()
+
+            if not Comments.objects.filter(pk=pk).exists():
+                return Response({'detail': 'Comment deleted successfully', 'comment': comment_data},
+                                status=status.HTTP_200_OK)
+            else:
+                print(f"Warning: Comment with ID {pk} still exists after deletion.")
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        except Comments.DoesNotExist:
+            return Response({'detail': 'The comment does not exist.'},
+                            status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            print(f"Exception during comment deletion: {e}")
+            return Response({'detail': f'An error occurred during comment deletion. {str(e)}'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class FriendshipViewSet(viewsets.ModelViewSet):
     queryset = Friendship.objects.all()
