@@ -30,7 +30,7 @@ DEBUG = False
 
 ALLOWED_HOSTS = [
     'localhost',
-    'sarvagyaSaab.pythonanywhere.com'
+    'kumarSarvagya.pythonanywhere.com'
 ]
 
 
