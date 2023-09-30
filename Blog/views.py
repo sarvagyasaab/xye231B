@@ -168,9 +168,11 @@ class CommentsViewSet(viewsets.ModelViewSet):
                             status=status.HTTP_401_UNAUTHORIZED)
 
         request.data['user_commented'] = request.user.pk
-        serializer = CommentsSerializer(data=request.data)
+
+        serializer = CommentsSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             comment = serializer.save()
+            print(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

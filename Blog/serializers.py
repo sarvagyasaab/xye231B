@@ -33,18 +33,23 @@ class PostSerializer(serializers.ModelSerializer):
 class CommentsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comments
-        fields = '__all__'
+        fields = "__all__"
 
     def create(self, validated_data):
-        # Get the user_commented from the context
-        user_commented = self.context.get('user_commented')
+        user_commented_username = validated_data.pop('user_commented', None)
+        if user_commented_username is not None:
+            try:
+                user_commented = User.objects.get(username=user_commented_username)
+                validated_data['user_commented'] = user_commented
+                comment = Comments.objects.create(**validated_data)
 
-        # Add the user_commented to the validated_data
-        validated_data['user_commented'] = user_commented
+                return comment
+            except User.DoesNotExist:
+                raise serializers.ValidationError("User with username {} does not exist".format(user_commented_username))
+        else:
+            raise serializers.ValidationError("Invalid user_commented data")
 
-        # Create and return the comment
-        comment = Comments.objects.create(**validated_data)
-        return comment
+
 
 class FriendshipSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
