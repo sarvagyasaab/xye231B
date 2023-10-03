@@ -18,6 +18,11 @@ from .serializers import (
 )
 from .models import UserProfilePic
 from .serializers import UserProfilePicSerializer
+from rest_framework.pagination import PageNumberPagination
+from django.contrib.auth.mixins import LoginRequiredMixin
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+
+
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -298,14 +303,7 @@ class FriendshipViewSet(viewsets.ModelViewSet):
     queryset = Friendship.objects.all()
     serializer_class = FriendshipSerializer
 
-class PostByUserViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Post.objects.all()
-    serializer_class = PostSerializer
 
-    def get_queryset(self):
-        username = self.kwargs.get('username')
-        user = get_object_or_404(User, username=username)
-        return Post.objects.filter(author=user)
 
 class FriendsByUsernameView(generics.ListAPIView):
     serializer_class = FriendshipSerializer
@@ -324,6 +322,37 @@ class UserSearchView(generics.ListAPIView):
     filter_backends = [filters.SearchFilter]
     search_fields = ['username', 'email']
 
+
+class MentionedPostsViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        username = self.kwargs['username']
+        user = get_object_or_404(User, username=username)
+        return Post.objects.filter(mentioned_user=user)
+
+class PostByAuthorViewSet(viewsets.ModelViewSet):
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        username = self.kwargs['username']
+        user = get_object_or_404(User, username=username)
+        return Post.objects.filter(author=user)
+
+class UserFriendsView(APIView):
+    def get(self, request, user_id, *args, **kwargs):
+        friends1 = Friendship.objects.filter(user__id=user_id, status='accepted')
+        friends2 = Friendship.objects.filter(friend__id=user_id, status='accepted')
+
+        all_friends = friends1 | friends2
+        serializer = FriendshipSerializer(all_friends, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
 from drf_yasg.utils import swagger_auto_schema
 
 @swagger_auto_schema(
@@ -332,7 +361,7 @@ from drf_yasg.utils import swagger_auto_schema
         400: "Bad Request",
         404: "Not Found",
     },
-    operation_description="Description of your view.",
+    operation_description="Description",
 )
 def your_view_name(self, request):
     pass

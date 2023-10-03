@@ -91,12 +91,12 @@ html[data-theme="light"],
 html, body {
     height: 100%;
 }
-
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300&display=swap');
 body {
     margin: 0;
     padding: 0;
     font-size: 0.875rem;
-    font-family: var(--font-family-primary);
+    font-family: 'Lato', sans-serif;
     color: var(--body-fg);
     background: var(--body-bg);
 }
@@ -104,7 +104,7 @@ body {
 /* LINKS */
 
 a:link, a:visited {
-    color: var(--link-fg);
+    color: greenyellow;
     text-decoration: none;
     transition: color 0.15s, background 0.15s;
 }

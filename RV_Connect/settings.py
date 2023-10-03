@@ -30,7 +30,7 @@ DEBUG = False
 
 ALLOWED_HOSTS = [
     'localhost',
-    'kumarSarvagya.pythonanywhere.com'
+    'p8u4DZxbX2UzaPO8hev0LDEUT0XcDM.pythonanywhere.com'
 ]
 
 
@@ -47,18 +47,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'RV_Connect.urls'
@@ -119,6 +120,20 @@ REST_FRAMEWORK = {
     ),
 }
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'p8u4DZxbX2UzaPO8$RV_Connect',
+        'USER': 'p8u4DZxbX2UzaPO8',
+        'PASSWORD': 'mukundprakharsarvagya',
+        'HOST': 'p8u4DZxbX2UzaPO8hev0LDEUT0XcDM.mysql.pythonanywhere-services.com',
+        'PORT': '',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
+    }
+}
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
@@ -137,6 +152,12 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+# CORS_ALLOWED_ORIGINS = [
+#     ''
+# ]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
