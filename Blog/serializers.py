@@ -2,6 +2,29 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import Post, Comments, Friendship, FriendRequest, UserProfilePic
+from .models import Group, Membership, Like
+from .models import ChatRoom
+
+class PostLikeSerializer(serializers.ModelSerializer):
+    likes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Post
+        fields = ['id', 'likes_count']
+
+    def get_likes_count(self, obj):
+        # Count the number of likes for the post
+        return Like.objects.filter(post=obj).count()
+
+class ChatRoomSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChatRoom
+        fields = '__all__'
+
+class LikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = '__all__'
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -72,3 +95,20 @@ class UserProfilePicSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfilePic
         fields = '__all__'
+
+class GroupSerializer(serializers.ModelSerializer):
+    members = UserSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Group
+        fields = '__all__'
+
+
+class MembershipSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Membership
+        fields = '__all__'  # Add specific fields if needed
+
+
+class FileUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()

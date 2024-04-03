@@ -11,10 +11,14 @@ from .views import (
     CommentsViewSet,
     UserSearchView, FriendsByUsernameView, UserProfilePicListCreateView, UserProfilePicDetailView,
     UserProfilePicByUsernameView,
+    UserProfilePicByEmailView,
     MentionedPostsViewSet,
-    UserFriendsView
+    UserFriendsView,
+    PostLikeCountView
 )
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
+from . import views
+
 
 
 router = DefaultRouter()
@@ -31,11 +35,24 @@ urlpatterns = [
 ]
 
 urlpatterns += [
+    # firebase
+    # path('fetch-data-from-firebase/', views.fetch_data_from_firebase, name='fetch_data_from_firebase'),
+    # firebase-close
+
+    # chatroom
+    path('chatrooms/', views.ChatRoomListCreateView.as_view(), name='chatroom-list-create'),
+    path('chatrooms/<int:pk>/', views.ChatRoomRetrieveUpdateDestroyView.as_view(), name='chatroom-detail'),
+
+    # likes
+    path('likes/', views.LikeListCreateView.as_view(), name='like-list-create'),
+    path('likes/<int:pk>/', views.LikeDetailView.as_view(), name='like-detail'),
+    path('likes/count/<int:pk>/', views.LikesCountView.as_view(), name='likes-count'),
+
     path('password_reset/', PasswordResetView.as_view(), name='password_reset'),
     path('api/users/search/', UserSearchView.as_view(), name='user-search'), #http://localhost:8000/api/users/search/?search=<name>/<email>
     path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
-    path('friend-requests/received/<str:user_identifier>/', FriendRequestViewSet.as_view({'get': 'received'}), name='received-friend-requests'),
-    path('friend-requests/sent/<str:user_identifier>/', FriendRequestViewSet.as_view({'get': 'sent'}), name='sent-friend-requests'),
+    # path('friend-requests/received/<str:user_identifier>/', FriendRequestViewSet.as_view({'get': 'received'}), name='received-friend-requests'),
+    # path('friend-requests/sent/<str:user_identifier>/', FriendRequestViewSet.as_view({'get': 'sent'}), name='sent-friend-requests'),
     path('', include(router.urls)),
     path('users/<int:pk>/user-details/', UserViewSet.as_view({'get': 'user_details'}), name='user-details'),
     path('comments/comments_on_post/<int:post_id>/', CommentsViewSet.as_view({'get': 'comments_on_post'}),
@@ -47,9 +64,18 @@ urlpatterns += [
     path('profile-pics/<int:pk>/', UserProfilePicDetailView.as_view(), name='profile-pic-detail'),
     path('profile-pics/by-username/<str:username>/', UserProfilePicByUsernameView.as_view(),
          name='profile-pic-by-username'),
+    path('profile-pics/by-email/<str:email>/', UserProfilePicByEmailView.as_view(),
+         name='profile-pic-by-email'),
     path('api/mentioned-posts/<str:username>/', MentionedPostsViewSet.as_view({'get': 'list'}), name='mentioned-posts-by-username'),
     path('api/posts-by-author/<str:username>/', PostByAuthorViewSet.as_view({'get': 'list'}), name='post-by-author'),
     path('user-friends/<int:user_id>/', UserFriendsView.as_view(), name='user-friends'),
+    path('groups/', views.GroupListCreateView.as_view(), name='group-list'),
+    path('groups/<int:pk>/', views.GroupDetailView.as_view(), name='group-detail'),
+    path('memberships/', views.MembershipListCreateView.as_view(), name='membership-list'),
+    path('memberships/<int:pk>/', views.MembershipDetailView.as_view(), name='membership-detail'),
+    path('user-groups/', views.UserGroupsView.as_view(), name='user-groups'),
+    path('api/branches/', views.BranchList.as_view(), name='branch-list'),
+    path('posts/<int:post_id>/likes/', PostLikeCountView.as_view(), name='post-like-count'),
 ]
 
 '''

@@ -20,9 +20,10 @@ from django.urls import path, include, re_path
 from RV_Connect.swagger import schema_view
 
 urlpatterns = [
+    # path('kqpzO6toaeXYvt7ipArKSipsJHJV6t0q/', admin.site.urls),
     path('admin/', admin.site.urls),
     path('', include('Blog.urls')),
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0),
             name='schema-json'),
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    # path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]

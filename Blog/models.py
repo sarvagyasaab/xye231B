@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.utils.html import strip_tags
+
 
 
 class Post(models.Model):
@@ -19,6 +21,31 @@ class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     color_code = models.CharField(max_length=10, choices=COLOR_CHOICES, default='red')
 
+    def save(self, *args, **kwargs):
+        # Basic sanitization: stripping HTML tags from the content
+        self.content = strip_tags(self.content)
+
+        super().save(*args, **kwargs)
+
+#post like
+class Like(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    date_liked = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.user.username} liked {self.post}"
+
+    class Meta:
+        unique_together = ('user', 'post')
+
+# random-chat
+class ChatRoom(models.Model):
+    group_id = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return f"({self.group_id})"
+
 class UserProfilePic(models.Model):
     BRANCH_CHOICES = [
         ('CSE', 'Computer Science and Engineering'),
@@ -33,23 +60,27 @@ class UserProfilePic(models.Model):
         ('AE', 'Aerospace Engineering'),
         ('MCA', 'Masters of Computer Applications'),
         ('ECE', 'Electronics and Telecommunication Engineering'),
-        ('EIE', 'Electrinics and Instrumentation Engineering'),
-        ('EEE', 'Electrical and Electrinics Engineering'),
+        ('EIE', 'Electronics and Instrumentation Engineering'),
+        ('EEE', 'Electrical and Electronics Engineering'),
         ('CE', 'Chemical Engineering'),
         ('CV', 'Civil Engineering'),
-        ('BT', 'Biotechnology')
+        ('BT', 'Biotechnology'),
+        ('RVC', 'RV Connect')
     ]
 
     COLLEGE_CHOICES = [
         ('RVCE', 'R.V. College of Engineering'),
         ('RVU', 'R.V. University'),
+        ('HW', 'Hogwarts School of Witchcraft and Wizardry')
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     bio = models.TextField(blank=True)
-    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+    profile_picture = models.CharField(max_length=300, default='', blank=True, null=True)
     branch = models.CharField(max_length=30, choices=BRANCH_CHOICES, default='', blank=True, null=True)
     college = models.CharField(max_length=30, choices=COLLEGE_CHOICES, default='', blank=True, null=True)
+    firebase_uid = models.CharField(max_length=255, blank=True, null=True)
+
 
     def __str__(self):
         return f"{self.user.username} - {self.get_branch_display()}"
@@ -101,6 +132,36 @@ class FriendRequest(models.Model):
 
     def __str__(self):
         return f"{self.sender.username} to {self.receiver.username}: {self.status}"
+
+
+class Group(models.Model):
+    name = models.CharField(max_length=100)
+    members = models.ManyToManyField(User, through='Membership')
+    created_by = models.ForeignKey(User, related_name='created_groups', null=True, on_delete=models.CASCADE)
+    admin = models.OneToOneField(User, related_name='admin_group', null=True, blank=True, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        is_new_group = self.pk is None
+        super().save(*args, **kwargs)
+
+        if is_new_group:
+            # Add logic for newly created group
+            pass
+
+
+class Membership(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ['user', 'group']  # Unique constraint on user and group combination
+
+    def __str__(self):
+        return f"{self.user.username} in {self.group.name}"
+
 
 
 

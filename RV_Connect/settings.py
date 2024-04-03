@@ -26,12 +26,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-#cs4v3&-cw62@tjl22v*yew&*&+)nz81sslfhe^e57#op8rix0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     'localhost',
     'p8u4DZxbX2UzaPO8hev0LDEUT0XcDM.pythonanywhere.com'
 ]
+
+#firebase
+# import firebase_admin
+# from firebase_admin import credentials
+
+# FIREBASE_CREDENTIALS_PATH = '/home/p8u4DZxbX2UzaPO8hev0LDEUT0XcDM/RV_Connect/RV_Connect/rv-connect-98f7a-firebase-adminsdk-5wny9-3524bda258.json'
+# cred = credentials.Certificate(FIREBASE_CREDENTIALS_PATH)
+# firebase_admin.initialize_app(cred)
+
+
 
 
 # Application definition
@@ -50,15 +60,27 @@ INSTALLED_APPS = [
     'corsheaders',
 ]
 
+# MIDDLEWARE = [
+#     'django.middleware.security.SecurityMiddleware',
+#     'django.contrib.sessions.middleware.SessionMiddleware',
+#     'django.middleware.csrf.CsrfViewMiddleware',
+#     'django.contrib.sessions.middleware.SessionMiddleware',
+#     'django.contrib.auth.middleware.AuthenticationMiddleware',
+#     'django.contrib.messages.middleware.MessageMiddleware',
+#     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+#     'corsheaders.middleware.CorsMiddleware',
+#     'django.middleware.common.CommonMiddleware',
+# ]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # Make sure this comes before CommonMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
 ]
 
@@ -86,13 +108,6 @@ WSGI_APPLICATION = 'RV_Connect.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
 
 
 # Password validation
@@ -125,11 +140,12 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'p8u4DZxbX2UzaPO8$RV_Connect',
         'USER': 'p8u4DZxbX2UzaPO8',
-        'PASSWORD': 'mukundprakharsarvagya',
+        'PASSWORD': 'sarvagya',
         'HOST': 'p8u4DZxbX2UzaPO8hev0LDEUT0XcDM.mysql.pythonanywhere-services.com',
         'PORT': '',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'charset': 'utf8mb4',
         },
     }
 }

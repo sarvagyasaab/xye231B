@@ -3,12 +3,12 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, status, generics, filters
+from rest_framework import viewsets, status, generics, filters, permissions
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Q
-from .models import Post, Comments, Friendship, FriendRequest
+from .models import Post, Comments, Friendship, FriendRequest, ChatRoom
 from .serializers import (
     PostSerializer,
     CommentsSerializer,
@@ -16,14 +16,87 @@ from .serializers import (
     FriendRequestSerializer,
     UserSerializer,
 )
-from .models import UserProfilePic
+from rest_framework.views import APIView
+from .models import UserProfilePic, Like
 from .serializers import UserProfilePicSerializer
 from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth.mixins import LoginRequiredMixin
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from .models import Group, Membership
+from .serializers import GroupSerializer, MembershipSerializer, LikeSerializer
+from .serializers import ChatRoomSerializer, PostLikeSerializer
+
+class PostLikeCountView(APIView):
+    def get(self, request, post_id):
+        try:
+            post = Post.objects.get(id=post_id)
+        except Post.DoesNotExist:
+            return Response({'error': 'Post not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = PostLikeSerializer(post)
+        return Response(serializer.data)
+
+class ChatRoomListCreateView(generics.ListCreateAPIView):
+    queryset = ChatRoom.objects.all()
+    serializer_class = ChatRoomSerializer
+
+class ChatRoomRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = ChatRoom.objects.all()
+    serializer_class = ChatRoomSerializer
+
+# firebase
+# from django.http import JsonResponse
+# from firebase_admin import firestore
+
+# def fetch_data_from_firebase(request):
+#     # Initialize Firebase Firestore
+#     db = firestore.client()
+
+#     # Example: Fetch data from a Firebase collection
+#     firebase_data = db.collection('your_collection').get()
+
+#     # Process data and convert to JSON
+#     data_list = [doc.to_dict() for doc in firebase_data]
+
+#     return JsonResponse(data_list, safe=False)
 
 
+# Likes
+class LikeListCreateView(generics.ListCreateAPIView):
+    queryset = Like.objects.all()
+    serializer_class = LikeSerializer
+    permission_classes = [IsAuthenticated]
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class LikeDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Like.objects.all()
+    serializer_class = LikeSerializer
+    permission_classes = [IsAuthenticated]
+
+class LikesCountView(generics.RetrieveAPIView):
+    queryset = Post.objects.all()
+    serializer_class = LikeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def retrieve(self, request, *args, **kwargs):
+        post_id = self.kwargs.get('pk')
+        try:
+            post = Post.objects.get(pk=post_id)
+        except Post.DoesNotExist:
+            return Response({"detail": "Post not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        likes_count = Like.objects.filter(post=post).count()
+        return Response({"likes_count": likes_count})
+
+
+from rest_framework.views import APIView
+class BranchList(APIView):
+    def get(self, request, format=None):
+        branches = UserProfilePic.objects.values_list('branch', flat=True).distinct()
+        serializer = UserProfilePicSerializer({'branch': branches}, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -32,8 +105,30 @@ class UserViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         email = request.data.get('email', '')
 
-        if not email.endswith('@rvce.edu.in'):
-            return Response({'detail': 'Email must end with @rvce.edu.in'}, status=status.HTTP_400_BAD_REQUEST)
+        if not (email.endswith('@rvce.edu.in') or email.endswith('rvu.edu.in')):
+            return Response({'detail': 'Email must end with @rvce.edu.in or rvu.edu.in'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # email_ids = [
+        #     "daivikshenoy.cs23@rvce.edu.in",
+        #     "bhuvaneshb.cd23@rvce.edu.in",
+        #     "soumikh.bsc23@rvu.edu.in",
+        #     "tejasr.cv22@rvce.edu.in",
+        #     "hardikgd.ee23@rvce.edu.in",
+        #     "adithyaganacharmj.ec22@rvce.edu.in",
+        #     "jeevans.cs22@rvce.edu.in",
+        #     "adarshs.cy22@rvce.edu.in",
+        #     "ayushojha.cd22@rvce.edu.in",
+        #     "anoushkad.cd22@rvce.edu.in",
+        #     "vishnusingh.et22@rvce.edu.in",
+        #     "tarunhs.cd22@rvce.edu.in",
+        #     "mukundverma.cd22@rvce.edu.in",
+        #     "prakharjain.cd22@rvce.edu.in",
+        #     "sarvagyakumar.cd22@rvce.edu.in"
+        # ]
+
+        # if email not in email_ids:
+        #     return Response({'detail': 'Email must end with @rvce.edu.in or rvu.edu.in'}, status=status.HTTP_400_BAD_REQUEST)
+
 
         hashed_password = make_password(request.data['password'])
         request.data['password'] = hashed_password
@@ -43,15 +138,25 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response({'detail': f'User registered successfully: {user}'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def retrieve_by_username(self, request, *args, **kwargs):
+        username = kwargs.get('pk')
+        user = get_object_or_404(User, username=username)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+    def retrieve_by_email(self, request, *args, **kwargs):
+        email = kwargs.get('pk')  # Assuming the email is passed as 'pk'
+        user = get_object_or_404(User, email=email)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
 class UserProfilePicListCreateView(generics.ListCreateAPIView):
     queryset = UserProfilePic.objects.all()
     serializer_class = UserProfilePicSerializer
-    permission_classes = [IsAuthenticated]
 
 class UserProfilePicDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = UserProfilePic.objects.all()
     serializer_class = UserProfilePicSerializer
-    permission_classes = [IsAuthenticated]
 
 from rest_framework.views import APIView
 class UserProfilePicByUsernameView(APIView):
@@ -72,6 +177,22 @@ class UserProfilePicByUsernameView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserProfilePicByEmailView(APIView):
+    def get(self, request, email, format=None):
+        user_profile = get_object_or_404(UserProfilePic, user__email=email)
+        serializer = UserProfilePicSerializer(user_profile)
+        return Response(serializer.data)
+
+    def put(self, request, email, format=None):
+        user_profile = get_object_or_404(UserProfilePic, user__email=email)
+        serializer = UserProfilePicSerializer(user_profile, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     from django.shortcuts import get_object_or_404
     from django.http import Http404
@@ -350,7 +471,43 @@ class UserFriendsView(APIView):
         serializer = FriendshipSerializer(all_friends, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 
+class GroupListCreateView(generics.ListCreateAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+
+class GroupDetailView(generics.RetrieveUpdateDestroyAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+
+class MembershipListCreateView(generics.ListCreateAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    queryset = Membership.objects.all()
+    serializer_class = MembershipSerializer
+
+class MembershipDetailView(generics.RetrieveUpdateDestroyAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    queryset = Membership.objects.all()
+    serializer_class = MembershipSerializer
+
+class UserGroupsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        memberships = Membership.objects.filter(user=user)
+        serializer = MembershipSerializer(memberships, many=True)
+        groups = serializer.data
+
+        return Response(groups, status=status.HTTP_200_OK)
 
 
 from drf_yasg.utils import swagger_auto_schema
